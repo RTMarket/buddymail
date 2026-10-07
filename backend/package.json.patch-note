@@ -1,0 +1,2 @@
+# sync 会覆盖 backend/package.json；若丢失 seed:standalone-admin，在 scripts 中加：
+# "seed:standalone-admin": "npx tsx src/scripts/seedStandaloneAdmin.ts"

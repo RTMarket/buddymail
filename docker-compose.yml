@@ -1,0 +1,46 @@
+# BuddyMail open-core — one-command self-hosting.
+# Usage:
+#   cp .env.example .env   # fill in MySQL password, domains, API keys
+#   docker compose up -d --build
+#   # open http://localhost:18080, then create your admin:
+#   docker compose exec backend npx tsx src/scripts/seedStandaloneAdmin.ts admin@example.com 'YourPass123'
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-buddymail}
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_PASSWORD:?set MYSQL_PASSWORD in .env}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_HOST: mysql
+      PORT: 8787
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      # local mail-vps helper scripts (DKIM/DNS tooling)
+      - ./backend/deploy/mail-vps:/opt/buddymail/deploy/mail-vps:ro
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    ports:
+      - "18080:80"
+    depends_on:
+      - backend
+
+volumes:
+  mysql-data:

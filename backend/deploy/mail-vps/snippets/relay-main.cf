@@ -1,0 +1,13 @@
+# Relay 发信机：587 提交 + SASL（sasldb）+ OpenDKIM milter
+smtpd_tls_security_level = may
+smtpd_sasl_auth_enable = yes
+smtpd_sasl_security_options = noanonymous
+smtpd_sasl_local_domain =
+broken_sasl_auth_clients = yes
+smtpd_sasl_type = cyrus
+smtpd_sasl_path = smtpd
+smtpd_recipient_restrictions = permit_sasl_authenticated, reject_unauth_destination
+milter_protocol = 2
+milter_default_action = accept
+smtpd_milters = inet:localhost:8891
+non_smtpd_milters = inet:localhost:8891

@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS leads_industry_catalog (
+  id BIGINT NOT NULL AUTO_INCREMENT,
+  tenant_id BIGINT NOT NULL,
+  name VARCHAR(120) NOT NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (id),
+  UNIQUE KEY uniq_tenant_industry_name (tenant_id, name),
+  KEY idx_tenant_id (tenant_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

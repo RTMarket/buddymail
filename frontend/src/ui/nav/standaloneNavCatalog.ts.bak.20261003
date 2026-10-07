@@ -1,0 +1,212 @@
+import type { NavItem, NavSection } from "./siteNavCatalog";
+
+const FOLLOWUP_CHANNELS_CACHE_KEY = "bss-followup-channels-cache";
+
+/** 从缓存读取跟进渠道（前端登录后从接口加载并缓存） */
+export function getFollowupChannelNavItems(): { to: string; label: string }[] {
+  const defaults = [
+    { to: "/crm/followup-boards/direct", label: "直客跟进" },
+    { to: "/crm/followup-boards/agency", label: "代理分销商" },
+    { to: "/crm/followup-boards/influencer", label: "网红博主导师" },
+  ];
+  try {
+    const raw = typeof localStorage !== "undefined" ? localStorage.getItem(FOLLOWUP_CHANNELS_CACHE_KEY) : null;
+    if (!raw) return defaults;
+    const arr = JSON.parse(raw) as { channelKey: string; label: string }[];
+    if (!Array.isArray(arr) || !arr.length) return defaults;
+    return arr.map((ch) => ({ to: `/crm/followup-boards/${ch.channelKey}`, label: ch.label }));
+  } catch {
+    return defaults;
+  }
+}
+
+/** 刷新跟进渠道缓存（从接口） */
+export async function refreshFollowupChannelsCache(): Promise<void> {
+  try {
+    const resp = await fetch("/api/crm/followup-channels", { credentials: "include" });
+    const data = (await resp.json()) as { ok: boolean; items?: { channelKey: string; label: string }[] };
+    if (data.ok && Array.isArray(data.items)) {
+      localStorage.setItem(FOLLOWUP_CHANNELS_CACHE_KEY, JSON.stringify(data.items));
+    }
+  } catch {
+    // 忽略
+  }
+}
+import { standaloneLicensePlanTierId } from "../../lib/standaloneDeploy";
+
+/** 日发 3000：侧栏不挂 B2B AI / 企业调研 / 企业leads精搜，只保留「生成邮箱」 */
+function isStandaloneDaily3kPack(): boolean {
+  return standaloneLicensePlanTierId() === "email-send-3000";
+}
+
+/** 与 {@link getVisibleNavSections} 中动态替换的区块 title 一致 */
+export const STANDALONE_EMAIL_MARKETING_NAV_TITLE = "邮件营销";
+
+/** 仅多机组 5 万/10 万拆「邮件营销 / 正式发送」专页；须运行时调用（非模块加载时），以读取 /api/standalone/license */
+export function buildEmailMarketingNavItems(): NavSection["items"] {
+  return [
+    { to: "/email/templates", label: "邮件模版" },
+    { to: "/email/campaigns", label: "邮件营销" },
+    { to: "/email/campaigns/list", label: "营销活动统计" },
+    { to: "/settings/email/dedicated-vps", label: "装机配置" }
+  ];
+}
+
+/** dnrpj.cn 定制版企业邮箱：1个企业邮箱 + 1个员工邮箱（都是体验版） */
+export function buildEnterpriseMailboxNavItems(): NavSection["items"] {
+  const boxKey = (email: string) => email.replace(/[^a-z0-9]/g, "-") || "box";
+  return [
+    {
+      to: "/email/daily-mailbox",
+      label: "企业邮箱（体验版）",
+      children: [
+        { to: `/email/daily-mailbox/${boxKey("marketing@mail.odnon.cn")}`, label: "marketing@mail.odnon.cn（体验版）" },
+      ],
+    },
+    {
+      to: "/email/daily-mailbox",
+      label: "员工邮箱（体验版）",
+      children: [
+        { to: `/email/daily-mailbox/${boxKey("sen@mail.odnon.cn")}`, label: "sen@mail.odnon.cn（体验版）" },
+      ],
+    }
+  ];
+}
+
+/** 静态 nav 骨架；邮件与营销项由 {@link buildEmailMarketingNavItems} 在渲染侧栏时覆盖 */
+const emailMarketingNavItems: NavSection["items"] = buildEmailMarketingNavItems();
+
+const socialLibraryNavSections: NavSection[] = [
+  {
+    title: "社媒发布",
+    items: [
+      { to: "/social/library", label: "频道区" }
+    ]
+  }
+];
+
+const linkedInNavSections: NavSection[] =
+  import.meta.env.VITE_BSS_LINKEDIN_PUBLISHER_ACCOUNTS === "0" ||
+  !import.meta.env.VITE_BSS_LINKEDIN_PUBLISHER_ACCOUNTS
+    ? []
+    : [
+        {
+          title: "LinkedIn 发布管理",
+          items: [
+            { to: "/linkedin/publishing", label: "账号管理" },
+            { to: "/linkedin/publishing/queue", label: "发布队列" },
+            { to: "/linkedin/publishing/compose", label: "创建发布" },
+            { to: "/linkedin/publishing/import", label: "网站文章导入" },
+            { to: "/linkedin/publishing/library", label: "文件库" }
+          ]
+        }
+      ];
+
+const wechatNavSections: NavSection[] =
+  import.meta.env.VITE_BSS_WECHAT_OFFICIAL_ACCOUNTS === "0" ||
+  !import.meta.env.VITE_BSS_WECHAT_OFFICIAL_ACCOUNTS
+    ? []
+    : [
+        {
+          title: "微信公众号发布管理",
+          items: [
+            { to: "/wechat-official/publishing", label: "创建文章" }
+          ]
+        }
+      ];
+
+function groupedNavItem(sections: NavSection[]): NavSection["items"][number] | null {
+  const sec = sections[0];
+  if (!sec?.items[0]) return null;
+  return { to: sec.items[0].to, label: sec.title, children: sec.items };
+}
+
+const socialPublishItems: NavSection["items"] = [
+  ...socialLibraryNavSections[0]!.items,
+  ...(groupedNavItem(linkedInNavSections) ? [groupedNavItem(linkedInNavSections)!] : []),
+  ...(groupedNavItem(wechatNavSections) ? [groupedNavItem(wechatNavSections)!] : [])
+];
+
+const qqEmailNavSection: NavSection = {
+  title: "生成邮箱",
+  items: [{ to: "/tools/qq-emails", label: "生成邮箱" }]
+};
+
+/** 运行时动态计算：授权档位由 /api/standalone/license 回写，菜单随重渲染恢复 */
+/** VITE_SHOW_LEADS_SEARCH=true 时强制显示搜索菜单（销售服务器用，不受 3k 档位限制） */
+function buildLeadsNavSection(): NavSection {
+  // dnrpj.cn 定制版：只保留行业企业搜索（体验版）
+  return {
+    title: "行业企业搜索（体验版）",
+    items: [
+      { to: "/leads/industry", label: "行业企业搜索（体验版）" },
+    ]
+  };
+}
+
+/** dnrpj.cn 定制版：每日日报总结（体验版） */
+const dailyReportNavSection: NavSection = {
+  title: "每日日报（体验版）",
+  items: [{ to: "/b2b-ai/daily-report", label: "每日日报总结（体验版）" }]
+};
+
+/** 留言板统一放在 socialboss.site；新服务器（销售中台）侧栏点开走新标签页 */
+const SOCIALBOSS_MESSAGE_BOARD_URL = "https://socialboss.site/ops/message-board";
+
+/** 是否用外链留言板：构建开关 VITE_MESSAGE_BOARD_EXTERNAL=true，或运行在新服务器 IP */
+export function isExternalMessageBoardMode(): boolean {
+  if (String(import.meta.env.VITE_MESSAGE_BOARD_EXTERNAL ?? "").trim() === "true") return true;
+  if (typeof window === "undefined") return false;
+  return window.location.hostname === "195.21.155.82";
+}
+
+function buildMessageBoardNavItem(): NavItem {
+  if (isExternalMessageBoardMode()) {
+    return { to: SOCIALBOSS_MESSAGE_BOARD_URL, label: "留言板", href: SOCIALBOSS_MESSAGE_BOARD_URL, newTab: true };
+  }
+  return { to: "/ops/message-board", label: "留言板" };
+}
+
+/** dnrpj.cn 定制版侧栏：每日日报（体验版）→ 行业企业搜索（体验版）→ 企业邮箱（体验版）→ CRM → 邮件营销 → 开发者应用 → 使用面板 / 账户 */
+export function getStandaloneNavSections(): NavSection[] {
+  return [
+    ...(isStandaloneDaily3kPack() ? [] : [dailyReportNavSection]),
+    buildLeadsNavSection(),
+    {
+      title: "企业邮箱（体验版）",
+      items: buildEnterpriseMailboxNavItems()
+    },
+    {
+      title: "CRM 管理",
+      items: [
+        { to: "/email/contacts", label: "CRM 客户新增" },
+        { to: "/email/contacts/database", label: "CRM 数据库" },
+        { to: "/crm/followup-boards", label: "客户跟进（体验版）", children: getFollowupChannelNavItems() }
+      ]
+    },
+    {
+      title: STANDALONE_EMAIL_MARKETING_NAV_TITLE,
+      items: emailMarketingNavItems
+    },
+    {
+      title: "开发者应用",
+      items: [
+        { to: "/settings/api", label: "开发者应用" },
+        { to: "/ops/pilot-team", label: "自动化任务执行" }
+      ]
+    },
+    {
+      title: "使用面板",
+      items: [
+        { to: "/ops/usage-panel", label: "面板使用" }
+      ]
+    },
+    {
+      title: "账户",
+      items: [{ to: "/account/center", label: "个人中心" }]
+    }
+  ];
+}
+
+/** 兼容：模块加载时的快照（构建档位正确时与动态结果一致） */
+export const navSections: NavSection[] = getStandaloneNavSections();

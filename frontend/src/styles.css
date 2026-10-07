@@ -1,0 +1,317 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 内容创作 · 文案区 contenteditable 段落间距 */
+.copy-body-editor p {
+  margin: 0.35em 0;
+}
+.copy-body-editor p:first-child {
+  margin-top: 0;
+}
+.copy-body-editor p:last-child {
+  margin-bottom: 0;
+}
+
+/* keep minimal; add design tokens later */
+html,
+body,
+#root {
+  height: 100%;
+}
+
+/* —— 顶栏热咖啡：热气轻飘 —— */
+@keyframes cafe-steam-drift {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: translateY(2px);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-5px);
+  }
+}
+.cafe-steam {
+  animation: cafe-steam-drift 2.2s ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+.cafe-steam-1 {
+  animation-delay: 0s;
+}
+.cafe-steam-2 {
+  animation-delay: 0.35s;
+}
+.cafe-steam-3 {
+  animation-delay: 0.7s;
+}
+
+/* 右下角在线客服：轻微上下浮动（展开面板时由组件去掉 class；系统减少动效时不播放） */
+@keyframes support-chat-fab-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.support-chat-fab-bob {
+  animation: support-chat-fab-bob 2.4s ease-in-out infinite;
+}
+.support-chat-fab-bob:hover {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .support-chat-fab-bob {
+    animation: none;
+  }
+}
+
+/*
+ * 邮件正文 / 签名档 — Quill Snow 工具栏与编辑区（硬性锁定）
+ * 未经需求方明确允许：禁止删除或弱化本段及下方 .email-quill-body / .email-quill-signature 相关规则。
+ * 见 .cursor/rules/email-template-quill-toolbar-lock.mdc
+ * - main.tsx：须先引入本文件（Tailwind），再引入 quill/dist/quill.snow.css。
+ * - quill.snow 里 .ql-container / .ql-editor 默认 height:100%；此处用更高特异性覆盖，避免编辑区塌成一条线。
+ */
+.email-quill-body .ql-container,
+.email-quill-signature .ql-container {
+  height: auto !important;
+}
+.email-quill-body .ql-container {
+  min-height: 280px !important;
+}
+.email-quill-signature .ql-container {
+  min-height: 180px !important;
+}
+.email-quill-body .ql-editor,
+.email-quill-signature .ql-editor {
+  height: auto !important;
+}
+.email-quill-body .ql-editor {
+  min-height: 260px !important;
+}
+.email-quill-signature .ql-editor {
+  min-height: 160px !important;
+}
+/* 不用 flex 包 .quill：Snow 工具栏大量 float 布局，flex 子项在部分浏览器下会显得像「只剩一条线」 */
+.email-quill-body > .quill,
+.email-quill-signature > .quill {
+  display: block;
+  min-height: 280px;
+}
+.email-quill-signature > .quill {
+  min-height: 180px;
+}
+
+.email-quill-body .ql-toolbar.ql-snow,
+.email-quill-signature .ql-toolbar.ql-snow {
+  display: block;
+  visibility: visible !important;
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 1;
+  min-height: 44px;
+  border-bottom: 1px solid rgb(226 232 240);
+  overflow: visible;
+}
+.email-quill-body .ql-toolbar.ql-snow .ql-formats,
+.email-quill-signature .ql-toolbar.ql-snow .ql-formats {
+  margin-right: 15px;
+}
+
+/* 正文翻译：工具栏独立一行（需求方确认挂载在 Snow 工具栏内） */
+.email-quill-body .ql-toolbar.ql-snow .bss-quill-translate-toolbar {
+  display: flex;
+  flex-basis: 100%;
+  width: 100%;
+  align-items: center;
+  margin: 6px 0 2px;
+  padding: 6px 8px 4px;
+  border-top: 1px solid rgb(226 232 240);
+  background: rgb(240 253 250 / 0.65);
+}
+.email-quill-body .ql-toolbar.ql-snow .bss-quill-translate-toolbar .bss-quill-translate-toolbar-inner {
+  width: 100%;
+}
+
+/* Preflight 可能影响按钮；与 Snow 工具栏一致，保证可点区域与图标可见 */
+.email-quill-body .ql-toolbar.ql-snow button,
+.email-quill-signature .ql-toolbar.ql-snow button {
+  display: inline-block !important;
+  float: left !important;
+  height: 24px !important;
+  width: 28px !important;
+  padding: 3px 5px !important;
+  background: none !important;
+  border: none !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+}
+
+/* Preflight 里 svg 为 block；保留 Quill 对按钮内图标的 float + 高度，并取消可能被继承的 max-width 限制 */
+.email-quill-body .ql-toolbar.ql-snow button svg,
+.email-quill-signature .ql-toolbar.ql-snow button svg {
+  max-width: none !important;
+  height: 100% !important;
+  float: left;
+  display: inline !important;
+  vertical-align: baseline !important;
+}
+
+/* 标题/字体/字号等下拉：Preflight 的 appearance:none 等会让 select 不可见或难点击 */
+.email-quill-body .ql-toolbar.ql-snow select,
+.email-quill-signature .ql-toolbar.ql-snow select {
+  appearance: auto !important;
+  -webkit-appearance: menulist-button !important;
+  background-color: #fff !important;
+  border: 1px solid #ccc !important;
+  border-radius: 3px !important;
+  color: #444 !important;
+  cursor: pointer !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  height: 24px !important;
+  line-height: 22px !important;
+  max-height: 28px !important;
+  padding: 0 6px !important;
+  box-sizing: border-box !important;
+}
+
+/* 与 Snow 一致：每行格式组须为 inline-block + float，否则工具栏会挤成一条线 */
+.email-quill-body .ql-toolbar.ql-snow .ql-formats,
+.email-quill-signature .ql-toolbar.ql-snow .ql-formats {
+  display: inline-block !important;
+  vertical-align: middle !important;
+}
+
+.email-quill-body .ql-toolbar.ql-snow .ql-picker,
+.email-quill-signature .ql-toolbar.ql-snow .ql-picker {
+  display: inline-block !important;
+  float: left !important;
+  color: #444 !important;
+  height: 24px !important;
+  vertical-align: middle !important;
+}
+
+.email-quill-body .ql-toolbar.ql-snow .ql-picker-label,
+.email-quill-signature .ql-toolbar.ql-snow .ql-picker-label {
+  display: inline-block !important;
+  height: 100% !important;
+}
+
+/* 字体色 / 背景色：色板勿被画布 overflow 裁切；Preflight 勿破坏色块尺寸 */
+.email-quill-body .ql-toolbar.ql-snow .ql-picker.ql-expanded,
+.email-quill-signature .ql-toolbar.ql-snow .ql-picker.ql-expanded {
+  z-index: 30 !important;
+}
+.email-quill-body .ql-toolbar.ql-snow .ql-color-picker .ql-picker-options,
+.email-quill-signature .ql-toolbar.ql-snow .ql-color-picker .ql-picker-options {
+  z-index: 40 !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12) !important;
+}
+.email-quill-body .ql-toolbar.ql-snow .ql-color-picker .ql-picker-item,
+.email-quill-signature .ql-toolbar.ql-snow .ql-color-picker .ql-picker-item {
+  display: block !important;
+  float: left !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 2px !important;
+  padding: 0 !important;
+  border: 1px solid transparent !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+}
+.email-quill-body .ql-toolbar.ql-snow select.ql-color,
+.email-quill-signature .ql-toolbar.ql-snow select.ql-color,
+.email-quill-body .ql-toolbar.ql-snow select.ql-background,
+.email-quill-signature .ql-toolbar.ql-snow select.ql-background {
+  display: none !important;
+}
+
+/* 正文「本地视频」嵌入（非 Snow 工具栏按钮） */
+.email-quill-body .ql-editor video.ql-email-html-video {
+  max-width: 100%;
+}
+
+.email-quill-body .ql-email-html-video-resize-handle:hover {
+  filter: brightness(1.08);
+}
+.email-quill-body .ql-email-html-video-resize-handle:focus-visible {
+  outline: 2px solid rgb(124 58 237);
+  outline-offset: 1px;
+}
+
+/* 识图/链接复刻：假输入框与卡片外形（Quill 会剥 inline border，用 blockquote+类名保留） */
+.email-quill-body .ql-editor blockquote.email-replica-field {
+  border: 1px solid #ced4da;
+  border-left: 1px solid #ced4da;
+  border-radius: 4px;
+  padding: 10px 12px;
+  margin: 8px 0 14px;
+  background: #ffffff;
+  color: #9ca3af;
+  font-size: 14px;
+  line-height: 1.4;
+}
+.email-quill-body .ql-editor blockquote.email-replica-card {
+  border: 1px solid #d9dee7;
+  border-left: 1px solid #d9dee7;
+  border-radius: 2px;
+  padding: 22px 24px;
+  margin: 0 auto;
+  max-width: 420px;
+  background: #ffffff;
+  text-align: left;
+}
+.email-quill-body .ql-editor blockquote.email-replica-btn {
+  display: inline-block;
+  width: auto;
+  border: 1px solid #d1d5db;
+  border-left: 1px solid #d1d5db;
+  border-radius: 999px;
+  padding: 8px 28px;
+  margin: 10px 0;
+  background: #ffffff;
+  color: #374151;
+  font-size: 14px;
+  text-align: center;
+}
+.email-quill-body .ql-editor p.email-replica-panel {
+  margin: 0;
+  padding: 20px 12px;
+  background-color: #eef2f6;
+  text-align: center;
+}
+
+/* 电商邮件助手：table 横排 BlockEmbed */
+.email-quill-body .ql-editor .ql-email-commerce-row {
+  margin: 0 0 14px;
+  user-select: none;
+}
+.email-quill-body .ql-editor .ql-email-commerce-row table {
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  border-collapse: collapse;
+}
+.email-quill-body .ql-editor .ql-email-commerce-row td {
+  vertical-align: top;
+  text-align: center;
+}
+.email-quill-body .ql-editor .ql-email-commerce-row img {
+  max-width: 100%;
+  height: auto;
+}
+
+
+/* 独立站：正文翻译 UI 未挂载，隐藏 Quill 预留空行 */
+.email-quill-body .ql-toolbar.ql-snow .bss-quill-translate-toolbar:empty {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+}

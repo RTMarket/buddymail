@@ -1,0 +1,2 @@
+# 041 在全新库无 smtp_profile_id 列；standalone 已改为不加 AFTER smtp_profile_id。
+# sync 后若 041 被主站覆盖，请保留本 note 并再改 standalone/backend/sql/041_email_ses_byod.sql 第 135 行。

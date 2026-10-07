@@ -1,0 +1,11 @@
+# 将下列格式写入邮件 VPS 上的 Dovecot passwd（路径以 10-auth.conf / passwd-file 为准，常见为 /etc/dovecot/users）。
+# 保存后执行：systemctl reload dovecot
+# 校验：doveadm auth test 'noreply@bigsocialboss.com'
+#
+# 明文调试（{PLAIN} 与密码之间不要空格）：
+# noreply@bigsocialboss.com:{PLAIN}在此处写密码
+#
+# 生产建议用哈希替代明文：
+#   doveadm pw -s SHA512-CRYPT -p '你的密码'
+# 再把输出的整串贴在冒号后。
+#

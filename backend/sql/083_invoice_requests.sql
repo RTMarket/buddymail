@@ -1,0 +1,26 @@
+-- 独立部署安装包 · 开票申请（用户提交 + 管理端上传发票 PDF）
+CREATE TABLE IF NOT EXISTS invoice_requests (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  request_no VARCHAR(32) NOT NULL,
+  tenant_id BIGINT NOT NULL,
+  user_id BIGINT NOT NULL,
+  invoice_type VARCHAR(32) NOT NULL,
+  status VARCHAR(20) NOT NULL DEFAULT 'processing',
+  ref_codes_json JSON NOT NULL,
+  orders_snapshot_json JSON NOT NULL,
+  total_amount_cents INT NOT NULL,
+  total_currency VARCHAR(8) NOT NULL DEFAULT 'USD',
+  buyer_payload_json JSON NOT NULL,
+  admin_note TEXT NULL,
+  reject_reason TEXT NULL,
+  invoice_file_path VARCHAR(512) NULL,
+  invoice_file_name VARCHAR(255) NULL,
+  invoice_uploaded_at DATETIME NULL,
+  invoice_uploaded_by BIGINT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE KEY uk_invoice_request_no (request_no),
+  KEY idx_invoice_tenant_created (tenant_id, created_at),
+  KEY idx_invoice_status_created (status, created_at),
+  CONSTRAINT fk_invoice_tenant FOREIGN KEY (tenant_id) REFERENCES tenants(id) ON DELETE CASCADE
+);

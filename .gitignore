@@ -1,0 +1,22 @@
+# --- never commit real secrets ---
+.env
+.env.local
+.env.*.local
+
+# --- dependencies ---
+node_modules/
+
+# --- build outputs ---
+dist/
+build/
+*.tsbuildinfo
+
+# --- logs / OS ---
+*.log
+.DS_Store
+Thumbs.db
+
+# --- local dev ---
+.vite/
+.idea/
+.vscode/
